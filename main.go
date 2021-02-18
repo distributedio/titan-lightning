@@ -22,12 +22,13 @@ func main() {
 	}
 
 	ctx := context.Background()
-	back, err := NewBackend(ctx, &cfg.Backend)
+	l, err := NewLightning(ctx, cfg)
 	if err != nil {
-		fmt.Printf("init backend failed, %s\n", err)
-		os.Exit(1)
-
+		fmt.Println("new lightning err", err)
+		return
 	}
-	_ = back
-
+	if err := l.Run(); err != nil {
+		fmt.Println("import err", err)
+		return
+	}
 }

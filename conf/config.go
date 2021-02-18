@@ -1,19 +1,22 @@
 package conf
 
+import "time"
+
 type Import struct {
-	Backend     Backend `cfg:"backend"`
-	Logger      Logger  `cfg:"logger"`
-	PIDFileName string  `cfg:"pid-filename; titan.pid; ; the file name to record connd PID"`
+	Backend           Backend       `cfg:"backend"`
+	Security          Security      `cfg:"security"`
+	SwitchModInterval time.Duration `cfg:"switch-mod-interval;20m;;switch mod tick interval"`
+	PdAddrs           string        `cfg:"pd-addrs; mocktikv://; ;pd address in tidb"`
+	Logger            Logger        `cfg:"logger"`
+	PIDFileName       string        `cfg:"pid-filename; titan.pid; ; the file name to record connd PID"`
 }
 
 type Backend struct {
-	Security       Security `cfg:"security"`
-	PdAddrs        string   `cfg:"pd-addrs; mocktikv://; ;pd address in tidb"`
-	MaxOpenFile    uint64   `cfg:"max-open-file;6;;max opened file num"`
-	ReginSplitSize string   `cfg:"regin-split-size; 96M; ; regin split size"`
-	SortedDir      string   `cfg:"sorted-dir; ./data; ; sorted sstable file path"`
-	Concurrency    int      `cfg:"concurrency;16;;concurrency num"`
-	SendKVPairs    int      `cfg:"send-kv-pairs;32768;;send kv paris"`
+	MaxOpenFile    uint64 `cfg:"max-open-file;6;;max opened file num"`
+	ReginSplitSize string `cfg:"regin-split-size; 96M; ; regin split size"`
+	SortedDir      string `cfg:"sorted-dir; ./data; ; sorted sstable file path"`
+	Concurrency    int    `cfg:"concurrency;16;;concurrency num"`
+	SendKVPairs    int    `cfg:"send-kv-pairs;32768;;send kv paris"`
 }
 
 type Security struct {
