@@ -5,6 +5,7 @@ go 1.14
 require (
 	cloud.google.com/go/pubsub v1.3.1 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
+	github.com/arthurkiller/rollingwriter v1.1.2
 	github.com/cheggaaa/pb/v3 v3.0.6 // indirect
 	github.com/cockroachdb/pebble v0.0.0-20210217155127-444296cfa2bb // indirect
 	github.com/distributedio/configo v0.0.0-20200107073829-efd79b027816
@@ -28,10 +29,12 @@ require (
 	github.com/prometheus/common v0.10.0 // indirect
 	github.com/prometheus/procfs v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.7.1 // indirect
+	github.com/tipsio/tips v0.0.0-20190604032214-b4d2924f0a97 // indirect
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/xitongsys/parquet-go v1.6.0 // indirect
 	github.com/xitongsys/parquet-go-source v0.0.0-20201108113611-f372b7d813be // indirect
 	go.opencensus.io v0.22.5 // indirect
+	go.uber.org/zap v1.16.0
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
 	golang.org/x/mod v0.4.1 // indirect
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a // indirect

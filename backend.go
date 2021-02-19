@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"math"
 
 	"github.com/docker/go-units"
@@ -33,7 +32,7 @@ func NewBackend(ctx context.Context, cfg *conf.Backend, tls *common.TLS, pdAddr 
 		cfg.SortedDir, cfg.Concurrency, cfg.SendKVPairs,
 		false, nil, maxOpenFiles)
 	if err != nil {
-		return nil, errors.New("build local backend failed")
+		return nil, err
 	}
 	return &Backend{
 		cfg: cfg,

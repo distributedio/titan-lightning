@@ -9,6 +9,7 @@ import (
 	sstpb "github.com/pingcap/kvproto/pkg/import_sstpb"
 	kv "github.com/pingcap/tidb-lightning/lightning/backend"
 	"github.com/pingcap/tidb-lightning/lightning/common"
+	"go.uber.org/zap"
 )
 
 type Lightning struct {
@@ -26,10 +27,12 @@ func NewLightning(ctx context.Context, cfg *conf.Import) (*Lightning, error) {
 	var err error
 
 	if l.tls, err = common.NewTLS(cfg.Security.CAPath, cfg.Security.CertPath, cfg.Security.KeyPath, cfg.PdAddrs); err != nil {
+		zap.L().Error("tlserr", zap.Error(err))
 		return nil, err
 	}
 
 	if l.bk, err = NewBackend(ctx, &cfg.Backend, l.tls, cfg.PdAddrs); err != nil {
+		zap.L().Error("new backerr", zap.Error(err))
 		return nil, err
 	}
 	return l, nil
@@ -114,5 +117,6 @@ func (l *Lightning) kvPars() kv.Rows {
 	val = append(val, []byte("testval")...)
 	result := make([]common.KvPair, 0)
 	result = append(result, common.KvPair{Key: key, Val: val})
+	zap.L().Info("add kv", zap.String("key", string(key)), zap.String("val", string(val)))
 	return kv.MakeRowsFromKvPairs(result)
 }
