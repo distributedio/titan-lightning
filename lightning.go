@@ -12,6 +12,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	DefaultTable = "defatuTable"
+)
+
 type Lightning struct {
 	ctx context.Context
 	cfg *conf.Import
@@ -72,32 +76,50 @@ func (l *Lightning) switchMode(ctx context.Context, mode sstpb.SwitchMode) {
 
 func (l *Lightning) Run() error {
 	ctx, cancel := context.WithCancel(l.ctx)
-	defer cancel()
 	go l.tickerWork(ctx)
 	l.switchMode(ctx, sstpb.SwitchMode_Import)
-	openEngin, err := l.bk.OpenEngine(l.ctx, "test", 0)
+	if err := l.process(ctx); err != nil {
+		cancel()
+		return err
+	}
+	cancel()
+	l.switchMode(ctx, sstpb.SwitchMode_Normal)
+	return nil
+}
+
+func (l *Lightning) process(ctx context.Context) error {
+	openEngin, err := l.bk.OpenEngine(l.ctx, DefaultTable, 0)
 	if err != nil {
+		zap.L().Error("open engin failed", zap.Error(err))
 		return err
 	}
 	w, err := openEngin.LocalWriter(ctx)
 	if err != nil {
+		zap.L().Error("get local writer failed", zap.Error(err))
 		return err
 	}
 	rows := l.kvPars()
 	if err := w.WriteRows(ctx, nil, rows); err != nil {
+		zap.L().Error("get writer failed", zap.Error(err))
+		return err
+	}
+	if err := w.Close(); err != nil {
+		zap.L().Error("close writer failed", zap.Error(err))
 		return err
 	}
 	close, err := openEngin.Close(ctx)
 	if err != nil {
+		zap.L().Error("get close engin failed", zap.Error(err))
 		return err
 	}
 	if err := close.Import(ctx); err != nil {
+		zap.L().Error("close engin import failed", zap.Error(err))
 		return err
 	}
 	if err := close.Cleanup(ctx); err != nil {
+		zap.L().Error("close engin cleanup failed", zap.Error(err))
 		return err
 	}
-	l.switchMode(ctx, sstpb.SwitchMode_Normal)
 	return nil
 }
 
@@ -117,6 +139,5 @@ func (l *Lightning) kvPars() kv.Rows {
 	val = append(val, []byte("testval")...)
 	result := make([]common.KvPair, 0)
 	result = append(result, common.KvPair{Key: key, Val: val})
-	zap.L().Info("add kv", zap.String("key", string(key)), zap.String("val", string(val)))
 	return kv.MakeRowsFromKvPairs(result)
 }

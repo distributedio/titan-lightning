@@ -43,7 +43,7 @@ func main() {
 		return
 	}
 	if err := l.Run(); err != nil {
-		fmt.Println("import err", err)
+		zap.L().Error("import data err", zap.Error(err))
 		return
 	}
 }
@@ -98,7 +98,7 @@ func ConfigureZap(name, path, level, pattern string, compress bool) error {
 	zap.ReplaceGlobals(log)
 	kvlog.SetAppLogger(log)
 	//http change log level
-	http.Handle("/titan-ligh/log/level", lv)
+	http.Handle("/titan-lightning/log/level", lv)
 	return nil
 }
 
