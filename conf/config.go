@@ -7,6 +7,7 @@ type Import struct {
 	Security          Security      `cfg:"security"`
 	SwitchModInterval time.Duration `cfg:"switch-mod-interval;20m;;switch mod tick interval"`
 	PdAddrs           string        `cfg:"pd-addrs; mocktikv://; ;pd address in tidb"`
+	SourceAddrs       string        `cfg:"source-addrs; ./6379.rdb; ;source data address "`
 	Logger            Logger        `cfg:"logger"`
 	PIDFileName       string        `cfg:"pid-filename; titan.pid; ; the file name to record connd PID"`
 }

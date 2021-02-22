@@ -2,13 +2,15 @@ package main
 
 import (
 	"context"
+	"io"
+	"os"
 	"time"
 
-	"github.com/distributedio/titan/db"
 	"github.com/nioshield/titan-lightning/conf"
 	sstpb "github.com/pingcap/kvproto/pkg/import_sstpb"
 	kv "github.com/pingcap/tidb-lightning/lightning/backend"
 	"github.com/pingcap/tidb-lightning/lightning/common"
+	"github.com/tent/rdb"
 	"go.uber.org/zap"
 )
 
@@ -98,9 +100,14 @@ func (l *Lightning) process(ctx context.Context) error {
 		zap.L().Error("get local writer failed", zap.Error(err))
 		return err
 	}
-	rows := l.kvPars()
-	if err := w.WriteRows(ctx, nil, rows); err != nil {
-		zap.L().Error("get writer failed", zap.Error(err))
+	callbak := NewRdbDecode(ctx, w)
+	f, err := l.reader()
+	if err != nil {
+		zap.L().Error("get reader failed", zap.Error(err))
+		return err
+	}
+	if err := rdb.Decode(f, callbak); err != nil {
+		zap.L().Error("decode failed", zap.Error(err))
 		return err
 	}
 	if err := w.Close(); err != nil {
@@ -123,21 +130,6 @@ func (l *Lightning) process(ctx context.Context) error {
 	return nil
 }
 
-func (l *Lightning) kvPars() kv.Rows {
-	d := &db.DB{Namespace: "default", ID: db.DBID(0)}
-	key := db.MetaKey(d, []byte("strkey"))
-	now := db.Now()
-	obj := &db.Object{
-		CreatedAt: now,
-		UpdatedAt: now,
-		ExpireAt:  0,
-		ID:        db.UUID(),
-		Type:      db.ObjectString,
-		Encoding:  db.ObjectEncodingRaw,
-	}
-	val := db.EncodeObject(obj)
-	val = append(val, []byte("testval")...)
-	result := make([]common.KvPair, 0)
-	result = append(result, common.KvPair{Key: key, Val: val})
-	return kv.MakeRowsFromKvPairs(result)
+func (l *Lightning) reader() (io.Reader, error) {
+	return os.Open(l.cfg.SourceAddrs)
 }

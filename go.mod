@@ -8,6 +8,7 @@ require (
 	github.com/arthurkiller/rollingwriter v1.1.2
 	github.com/cheggaaa/pb/v3 v3.0.6 // indirect
 	github.com/cockroachdb/pebble v0.0.0-20210217155127-444296cfa2bb // indirect
+	github.com/cupcake/rdb v0.0.0-20161107195141-43ba34106c76 // indirect
 	github.com/distributedio/configo v0.0.0-20200107073829-efd79b027816
 	github.com/distributedio/titan v0.6.1-0.20210207122117-7ae6bc731ae1
 	github.com/docker/go-units v0.4.0
@@ -29,7 +30,7 @@ require (
 	github.com/prometheus/common v0.10.0 // indirect
 	github.com/prometheus/procfs v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.7.1 // indirect
-	github.com/tipsio/tips v0.0.0-20190604032214-b4d2924f0a97 // indirect
+	github.com/tent/rdb v0.0.0-20161107195141-43ba34106c76
 	github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
 	github.com/xitongsys/parquet-go v1.6.0 // indirect
 	github.com/xitongsys/parquet-go-source v0.0.0-20201108113611-f372b7d813be // indirect

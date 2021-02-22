@@ -1,0 +1,62 @@
+#type: time.Duration, description: switch mod tick interval, default: 20m
+#switch-mod-interval = "20m0s"
+
+#type: string, description: pd address in tidb, default: mocktikv://
+#pd-addrs = "mocktikv://"
+
+#type: string, description: source data address, default: ./6379.rdb
+#source-addrs = "./6379.rdb"
+
+#type: string, description: the file name to record connd PID, default: titan.pid
+#pid-filename = "titan.pid"
+
+
+[backend]
+
+#type: uint64, description: max opened file num, default: 6
+#max-open-file = 6
+
+#type: string, description: regin split size, default: 96M
+#regin-split-size = "96M"
+
+#type: string, description: sorted sstable file path, default: ./data
+#sorted-dir = "./data"
+
+#type: int, description: concurrency num, default: 16
+#concurrency = 16
+
+#type: int, description: send kv paris, default: 32768
+#send-kv-pairs = 32768
+
+
+
+[security]
+
+#type: string
+c_a_path = ""
+
+#type: string
+cert_path = ""
+
+#type: string
+key_path = ""
+
+
+
+[logger]
+
+#type: string, description: the default logger name, default: titan
+#name = "titan"
+
+#type: string, description: the default log path (or stdout/stderr), default: logs/titan-lightning
+#path = "logs/titan-lightning"
+
+#type: string, description: log level(debug, info, warn, error, panic, fatal), default: info
+#level = "info"
+
+#type: bool, rules: boolean, description: true for enabling log compress, default: false
+#compress = false
+
+#type: string, description: log time rotate pattern(s m h D M W), default: 0 0 0 * * *
+#time-rotate = "0 0 0 * * *"
+
