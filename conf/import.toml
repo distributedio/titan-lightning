@@ -1,11 +1,14 @@
 #type: time.Duration, description: switch mod tick interval, default: 20m
 #switch-mod-interval = "20m0s"
 
-#type: string, description: pd address in tidb, default: mocktikv://
-#pd-addrs = "mocktikv://"
+#type: string, description: database namespace, default: default
+#namespace = "default"
 
-#type: string, description: source data address, default: ./6379.rdb
-#source-addrs = "./6379.rdb"
+#type: string, description: pd address in tidb, default: 127.0.0.1:2379
+#pd-addrs = "127.0.0.1:2379"
+
+#type: string, description: source data address, default: ./dump.rdb
+#source-addrs = "./dump.rdb"
 
 #type: string, description: the file name to record connd PID, default: titan.pid
 #pid-filename = "titan.pid"

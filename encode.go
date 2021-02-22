@@ -24,7 +24,7 @@ func ExpireKey(key []byte, ts int64) ([]byte, error) {
 	return buf, nil
 }
 
-func HashItemKey(dbInfo *db.DB, meta *StringMeta, field []byte) []byte {
+func HashItemKey(dbInfo *db.DB, meta *HashMeta, field []byte) []byte {
 	b := db.DataKey(dbInfo, meta.ID)
 	b = append(b, ':')
 	return append(b, field...)

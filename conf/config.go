@@ -6,8 +6,9 @@ type Import struct {
 	Backend           Backend       `cfg:"backend"`
 	Security          Security      `cfg:"security"`
 	SwitchModInterval time.Duration `cfg:"switch-mod-interval;20m;;switch mod tick interval"`
-	PdAddrs           string        `cfg:"pd-addrs; mocktikv://; ;pd address in tidb"`
-	SourceAddrs       string        `cfg:"source-addrs; ./6379.rdb; ;source data address "`
+	NameSpace         string        `cfg:"namespace; default; ;database namespace"`
+	PdAddrs           string        `cfg:"pd-addrs; 127.0.0.1:2379; ;pd address in tidb"`
+	SourceAddrs       string        `cfg:"source-addrs; ./dump.rdb; ;source data address "`
 	Logger            Logger        `cfg:"logger"`
 	PIDFileName       string        `cfg:"pid-filename; titan.pid; ; the file name to record connd PID"`
 }

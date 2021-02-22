@@ -9,9 +9,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewRdbDecode(ctx context.Context, w *kv.LocalEngineWriter) *RdbDecode {
+func NewRdbDecode(ctx context.Context, w *kv.LocalEngineWriter, ns string) *RdbDecode {
 	return &RdbDecode{
 		ctx: ctx,
+		ns:  ns,
 		w:   w,
 	}
 }
@@ -59,16 +60,22 @@ func (r *RdbDecode) Aux(key, value []byte) {}
 func (r *RdbDecode) ResizeDatabase(dbSize, expiresSize uint32) {}
 
 // Set is called once for each string key.
-func (r *RdbDecode) Set(key, value []byte, expire int64) {
-	if r.IsExpired(expire) {
+func (r *RdbDecode) Set(key, value []byte, expiry int64) {
+	if r.IsExpired(expiry) {
 		return
 	}
 	meta := NewStringMeta()
 	meta.Value = value
-	if expire > 0 {
-		meta.Object.ExpireAt = expire
+	metaKey := db.MetaKey(r.db, key)
+	var kvs []common.KvPair
+	if expiry > 0 {
+		meta.Object.ExpireAt = expiry
+		if ekey, err := ExpireKey(metaKey, expiry); err == nil {
+			kvs = append(kvs, common.KvPair{Key: ekey, Val: meta.ID})
+		}
 	}
-	kvs := []common.KvPair{common.KvPair{Key: db.MetaKey(r.db, key), Val: meta.Encode()}}
+
+	kvs = append(kvs, common.KvPair{Key: metaKey, Val: meta.Encode()})
 	if err := r.write(kv.MakeRowsFromKvPairs(kvs)); err != nil {
 		zap.L().Error("write string err", zap.String("key", string(key)), zap.Error(err))
 	}
@@ -78,6 +85,7 @@ func (r *RdbDecode) Set(key, value []byte, expire int64) {
 // Hset will be called exactly length times before EndHash.
 func (r *RdbDecode) StartHash(key []byte, length, expiry int64) {
 	if r.IsExpired(expiry) {
+		zap.L().Info("hash key expired", zap.String("key", string(key)))
 		return
 	}
 	meta := NewHashMeta()
@@ -89,8 +97,13 @@ func (r *RdbDecode) StartHash(key []byte, length, expiry int64) {
 
 // Hset is called once for each field=value pair in a hash.
 func (r *RdbDecode) Hset(key, field, value []byte) {
-	meta := r.meta.(*StringMeta)
-	kvs := []common.KvPair{common.KvPair{Key: HashItemKey(r.db, meta, field), Val: value}}
+	if r.meta == nil {
+		return
+	}
+	meta := r.meta.(*HashMeta)
+	var kvs []common.KvPair
+	kvs = append(kvs, common.KvPair{Key: HashItemKey(r.db, meta, field), Val: value})
+
 	if err := r.write(kv.MakeRowsFromKvPairs(kvs)); err != nil {
 		zap.L().Error("write hash iter err", zap.String("key", string(key)), zap.Error(err))
 	}
@@ -98,13 +111,19 @@ func (r *RdbDecode) Hset(key, field, value []byte) {
 
 // EndHash is called when there are no more fields in a hash.
 func (r *RdbDecode) EndHash(key []byte) {
-	meta := r.meta.(*StringMeta)
-	kvs := []common.KvPair{common.KvPair{Key: db.MetaKey(r.db, key), Val: meta.Encode()}}
+	if r.meta == nil {
+		return
+	}
+	meta := r.meta.(*HashMeta)
+	metaKey := db.MetaKey(r.db, key)
+	var kvs []common.KvPair
+	kvs = append(kvs, common.KvPair{Key: metaKey, Val: meta.Encode()})
 	if meta.ExpireAt > 0 {
-		if ekey, err := ExpireKey(key, meta.ExpireAt); err == nil {
+		if ekey, err := ExpireKey(metaKey, meta.ExpireAt); err == nil {
 			kvs = append(kvs, common.KvPair{Key: ekey, Val: meta.ID})
 		}
 	}
+
 	if err := r.write(kv.MakeRowsFromKvPairs(kvs)); err != nil {
 		zap.L().Error("write hash meta err", zap.String("key", string(key)), zap.Error(err))
 	}
@@ -125,8 +144,12 @@ func (r *RdbDecode) StartSet(key []byte, cardinality, expiry int64) {
 
 // Sadd is called once for each member of a set.
 func (r *RdbDecode) Sadd(key, member []byte) {
+	if r.meta == nil {
+		return
+	}
 	meta := r.meta.(*SetMeta)
-	kvs := []common.KvPair{common.KvPair{Key: SetItemKey(r.db, meta, member), Val: db.SetNilValue}}
+	var kvs []common.KvPair
+	kvs = append(kvs, common.KvPair{Key: SetItemKey(r.db, meta, member), Val: db.SetNilValue})
 	if err := r.write(kv.MakeRowsFromKvPairs(kvs)); err != nil {
 		zap.L().Error("write set iter err", zap.String("key", string(key)), zap.Error(err))
 	}
@@ -136,10 +159,15 @@ func (r *RdbDecode) Sadd(key, member []byte) {
 
 // EndSet is called when there are no more fields in a set.
 func (r *RdbDecode) EndSet(key []byte) {
+	if r.meta == nil {
+		return
+	}
 	meta := r.meta.(*SetMeta)
-	kvs := []common.KvPair{common.KvPair{Key: db.MetaKey(r.db, key), Val: meta.Encode()}}
+	metaKey := db.MetaKey(r.db, key)
+	var kvs []common.KvPair
+	kvs = append(kvs, common.KvPair{Key: metaKey, Val: meta.Encode()})
 	if meta.ExpireAt > 0 {
-		if ekey, err := ExpireKey(key, meta.ExpireAt); err == nil {
+		if ekey, err := ExpireKey(metaKey, meta.ExpireAt); err == nil {
 			kvs = append(kvs, common.KvPair{Key: ekey, Val: meta.ID})
 		}
 	}
@@ -165,6 +193,9 @@ func (r *RdbDecode) StartList(key []byte, length, expiry int64) {
 
 // Rpush is called once for each value in a list.
 func (r *RdbDecode) Rpush(key, value []byte) {
+	if r.meta == nil {
+		return
+	}
 	meta := r.meta.(*LListMeta)
 	meta.Rindex++
 	iterKey, err := LListItemKey(r.db, meta, meta.Rindex)
@@ -175,8 +206,8 @@ func (r *RdbDecode) Rpush(key, value []byte) {
 	if meta.Len == 1 {
 		meta.Lindex = meta.Rindex
 	}
-
-	kvs := []common.KvPair{common.KvPair{Key: iterKey, Val: value}}
+	var kvs []common.KvPair
+	kvs = append(kvs, common.KvPair{Key: iterKey, Val: value})
 	if err := r.write(kv.MakeRowsFromKvPairs(kvs)); err != nil {
 		zap.L().Error("write set iter err", zap.String("key", string(key)), zap.Error(err))
 	}
@@ -185,8 +216,13 @@ func (r *RdbDecode) Rpush(key, value []byte) {
 
 // EndList is called when there are no more values in a list.
 func (r *RdbDecode) EndList(key []byte) {
+	if r.meta == nil {
+		return
+	}
 	meta := r.meta.(*LListMeta)
-	kvs := []common.KvPair{common.KvPair{Key: db.MetaKey(r.db, key), Val: meta.Encode()}}
+	metaKey := db.MetaKey(r.db, key)
+	var kvs []common.KvPair
+	kvs = append(kvs, common.KvPair{Key: metaKey, Val: meta.Encode()})
 	if meta.ExpireAt > 0 {
 		if ekey, err := ExpireKey(key, meta.ExpireAt); err == nil {
 			kvs = append(kvs, common.KvPair{Key: ekey, Val: meta.ID})
@@ -213,17 +249,22 @@ func (r *RdbDecode) StartZSet(key []byte, cardinality, expiry int64) {
 
 // Zadd is called once for each member of a sorted set.
 func (r *RdbDecode) Zadd(key []byte, score float64, member []byte) {
+	if r.meta == nil {
+		return
+	}
 	meta := r.meta.(*ZSetMeta)
-	dkey := db.DataKey(r.db, key)
+	dkey := db.DataKey(r.db, meta.ID)
 	iterKey := ZsetItemKey(dkey, member)
 	bytesScore, err := db.EncodeFloat64(score)
 	if err != nil {
+		zap.L().Info("write zset encode score err", zap.Error(err))
 		return
 	}
-
-	kvs := []common.KvPair{common.KvPair{Key: iterKey, Val: bytesScore}}
+	var kvs []common.KvPair
+	kvs = append(kvs, common.KvPair{Key: iterKey, Val: bytesScore})
 	scoreKey := ZsetScoreKey(dkey, bytesScore, member)
 	kvs = append(kvs, common.KvPair{Key: scoreKey, Val: db.NilValue})
+
 	if err := r.write(kv.MakeRowsFromKvPairs(kvs)); err != nil {
 		zap.L().Error("write zset iter err", zap.String("key", string(key)), zap.Error(err))
 	}
@@ -233,10 +274,15 @@ func (r *RdbDecode) Zadd(key []byte, score float64, member []byte) {
 
 // EndZSet is called when there are no more members in a sorted set.
 func (r *RdbDecode) EndZSet(key []byte) {
+	if r.meta == nil {
+		return
+	}
 	meta := r.meta.(*ZSetMeta)
-	kvs := []common.KvPair{common.KvPair{Key: db.MetaKey(r.db, key), Val: meta.Encode()}}
+	metaKey := db.MetaKey(r.db, key)
+	var kvs []common.KvPair
+	kvs = append(kvs, common.KvPair{Key: metaKey, Val: meta.Encode()})
 	if meta.ExpireAt > 0 {
-		if ekey, err := ExpireKey(key, meta.ExpireAt); err == nil {
+		if ekey, err := ExpireKey(metaKey, meta.ExpireAt); err == nil {
 			kvs = append(kvs, common.KvPair{Key: ekey, Val: meta.ID})
 		}
 	}

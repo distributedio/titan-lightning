@@ -100,7 +100,7 @@ func (l *Lightning) process(ctx context.Context) error {
 		zap.L().Error("get local writer failed", zap.Error(err))
 		return err
 	}
-	callbak := NewRdbDecode(ctx, w)
+	callbak := NewRdbDecode(ctx, w, l.cfg.NameSpace)
 	f, err := l.reader()
 	if err != nil {
 		zap.L().Error("get reader failed", zap.Error(err))
