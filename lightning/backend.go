@@ -1,10 +1,10 @@
-package main
+package lightning
 
 import (
 	"context"
 	"math"
 
-	"github.com/docker/go-units"
+	units "github.com/docker/go-units"
 	"github.com/nioshield/titan-lightning/conf"
 	kv "github.com/pingcap/tidb-lightning/lightning/backend"
 	"github.com/pingcap/tidb-lightning/lightning/common"
@@ -43,12 +43,3 @@ func NewBackend(ctx context.Context, cfg *conf.Backend, tls *common.TLS, pdAddr 
 func (bk *Backend) OpenEngine(ctx context.Context, preKey string, enginID int32) (*kv.OpenedEngine, error) {
 	return bk.b.OpenEngine(ctx, preKey, enginID)
 }
-
-//OpenEngine
-// localwrite-> WriteRows
-// close
-
-//import
-//clean
-//compatch
-//switchmode

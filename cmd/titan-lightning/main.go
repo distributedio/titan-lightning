@@ -13,6 +13,7 @@ import (
 
 	"github.com/distributedio/configo"
 	"github.com/nioshield/titan-lightning/conf"
+	"github.com/nioshield/titan-lightning/lightning"
 	kvlog "github.com/pingcap/tidb-lightning/lightning/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -37,7 +38,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	l, err := NewLightning(ctx, cfg)
+	l, err := lightning.NewLightning(ctx, cfg)
 	if err != nil {
 		zap.L().Error("new lightning err", zap.Error(err))
 		return
