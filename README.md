@@ -1,5 +1,5 @@
 # Titan Lightning
-**TiDB Lightning** is a tool for fast full import of large amounts of data into a [Titan](https://github.com/distributedio/titan) cluster.
+**Titan Lightning** is a tool for fast full import of large amounts of data into a [Titan](https://github.com/distributedio/titan) cluster.
 
 it implements parsing and encoding of the [Redis](http://redis.io) [RDB file format](https://github.com/sripathikrishnan/redis-rdb-tools/blob/master/docs/RDB_File_Format.textile).
 
